@@ -96,7 +96,7 @@ def open_context(headless: bool, browser: str, brave_path: str | None,
 
 
 def _first_page(ctx):
-    return ctx.pages[0] if ctx.pages else ctx.new_page()
+    return ctx.new_page()  # restored tabs from the profile can be dead; always open fresh
 
 
 def signed_in(page, league_id: str) -> bool:
@@ -125,9 +125,8 @@ def login(ctx, league_id: str, timeout_s: int = 600) -> bool:
                 html = page.content()
                 if parse.looks_like_league_page(html, league_id):
                     return True
-            elif "fantasysports.yahoo.com" in url and "/nba/" not in url:
-                # Yahoo sometimes lands on the Fantasy home page after login.
-                page.goto(urls.league_home(league_id), wait_until="domcontentloaded", timeout=60_000)
+            # Never navigate while the user is signing in: redirecting here
+            # interrupted the sign-in page and caused a refresh loop.
         except Exception:  # noqa: BLE001 - page navigating mid-check; try again
             pass
         time.sleep(2)
@@ -161,8 +160,21 @@ class PlaywrightFetcher:
         for attempt in range(3):
             self._wait_turn()
             resp = self.page.goto(url, wait_until="domcontentloaded", timeout=60_000)
-            try:  # let late JS fill in tables, but don't wait forever
-                self.page.wait_for_load_state("networkidle", timeout=5_000)
+            # Yahoo's pages are server-rendered, so this copy already has the
+            # data. Keep it: if an ad blocker stops Yahoo's ad scripts, its
+            # recovery script blanks the page a few seconds later.
+            early_html = self.page.content()
+            # Yahoo pages are big and partly JS-rendered: wait for the full
+            # load, then for real content (links into the league), then a
+            # short network-idle grace period. Each wait is capped.
+            for state, ms in (("load", 30_000), ("networkidle", 8_000)):
+                try:
+                    self.page.wait_for_load_state(state, timeout=ms)
+                except Exception:  # noqa: BLE001
+                    pass
+            try:
+                self.page.wait_for_function(
+                    "document.querySelectorAll('a[href*=\"/nba/\"]').length > 5", timeout=15_000)
             except Exception:  # noqa: BLE001
                 pass
             self._last = time.time()
@@ -174,6 +186,8 @@ class PlaywrightFetcher:
                 continue
             break
         html = self.page.content()
+        if parse.is_blocker_overlay(html) or parse.nba_link_count(early_html) > parse.nba_link_count(html):
+            html = early_html
         final_url = self.page.url
         if self.debug_dir:
             self._dump(label, url, final_url, status, html)
