@@ -75,3 +75,40 @@ fn unknown_team_fails_cleanly() {
     assert!(!out.status.success());
     assert!(String::from_utf8_lossy(&out.stderr).contains("unknown team"));
 }
+
+/// `fixtures/scraper_sample_snapshot.json` is written by the Python scraper
+/// (`scraper/`) crawling a *fake* Yahoo site in its test suite. Loading it
+/// here proves the scraper's output matches the Rust snapshot schema.
+const SCRAPER_SAMPLE: &str = "fixtures/scraper_sample_snapshot.json";
+
+#[test]
+fn scraper_shaped_snapshot_loads() {
+    let out = hoops(&[
+        "--snapshot",
+        SCRAPER_SAMPLE,
+        "available-players",
+        "--limit",
+        "5",
+    ]);
+    assert!(out.contains("34 available of 190 players"), "{out}");
+    assert!(out.contains("Fakey Player"), "{out}");
+}
+
+#[test]
+fn scraper_shaped_snapshot_supports_every_report() {
+    let report = hoops(&["--snapshot", SCRAPER_SAMPLE, "team-report"]);
+    assert!(report.contains("Cripples and Bastards"), "{report}");
+
+    // Week 2: one add/drop by my team; weekly stats + matchup come from the
+    // scraped matchup pages.
+    let impact = hoops(&["--snapshot", SCRAPER_SAMPLE, "add-impact"]);
+    assert!(impact.contains("Adds used: 1/5"), "{impact}");
+    assert!(impact.contains("Fake Team 03"), "{impact}");
+
+    // Week 1 (a past week): roster comes from the week-1 matchup page.
+    let week1 = hoops(&["--snapshot", SCRAPER_SAMPLE, "--week", "1", "add-impact"]);
+    assert!(week1.contains("Adds used: 0/5"), "{week1}");
+
+    let suggest = hoops(&["--snapshot", SCRAPER_SAMPLE, "suggest", "--limit", "3"]);
+    assert!(suggest.contains("Free-agent suggestions"), "{suggest}");
+}

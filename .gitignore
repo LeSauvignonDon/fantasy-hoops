@@ -16,3 +16,11 @@ oauth*.json
 .idea/
 .vscode/
 .DS_Store
+
+# Scraper: virtualenvs, caches and any browser profile placed in the repo by mistake.
+# (Scraped snapshots and --debug-dump HTML go to /data/, ignored above.)
+/scraper/.venv/
+__pycache__/
+*.pyc
+browser-profile/
+.fantasy-hoops/

@@ -97,6 +97,19 @@ Deliberately *not* used yet: `chrono` (timestamps are RFC 3339 strings),
 ### Implement the Yahoo source (once approved)
 Follow the numbered plan in `datasource/yahoo.rs`. Add `reqwest = { version = "0.12", features = ["blocking", "json"] }` and `oauth2`. Deserialize Yahoo's (deeply nested) JSON into private `Yahoo*` structs, then convert to `LeagueData` with `impl From<...>`. Keep Yahoo types private to `yahoo.rs` so the rest of the code never sees them. Finally add a `--source yahoo` flag in `commands::load`. Keep the client secret in an env var; tokens go in a git-ignored file.
 
+### The scraper (`scraper/`, Python)
+Until the API route is approved, `scraper/` produces snapshots by reading the
+league's web pages in a real browser. Read its modules in this order:
+`stats.py` (column name -> `StatLine` field), `parse.py` (HTML -> plain
+Python rows; pure functions), `build.py` (rows -> the exact JSON `LeagueData`
+expects, plus a Python copy of `validate`), `scrape.py` (which pages, in what
+order), `browser.py` (Playwright; the only file that touches the network).
+`scrape.run_scrape` takes the fetch function as a parameter, so the tests
+crawl a fake site (`scraper/tests/fake_site.py`) with no browser. That
+crawl's output is committed as `fixtures/scraper_sample_snapshot.json`, and
+`tests/cli.rs` loads it with the real `hoops` binary, so a schema mismatch
+between the two languages fails `cargo test`.
+
 ### Combining sources
 Box scores provide weekly stats only. Write a `MergedSource { base: Box<dyn DataSource>, stats: BoxScoreSource }` whose `load` takes rosters/transactions from `base` and replaces `weekly_stats`. That is the *composite* pattern and needs no change to the trait.
 

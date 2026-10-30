@@ -1,0 +1,10 @@
+# Python virtualenvs and caches (created by `uv sync` / `python -m venv`)
+.venv/
+venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+# Never commit browser profiles, cookies or scraped pages if someone points
+# --profile-dir or --out inside the repo.
+browser-profile/
+*.html.dump

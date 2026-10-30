@@ -66,6 +66,23 @@ Write a JSON file with the same shape as `fixtures/sample_snapshot.json`
 `--snapshot path/to/file.json`. `*.db`, `/data/`, `/snapshots/` and token files
 are git-ignored so real league data and credentials stay local.
 
+### Scraping your Yahoo league (local, Mac)
+
+[`scraper/`](scraper/README.md) is a small Python + Playwright tool that signs in
+through a real browser window (you do the passkey; the script never sees or
+stores credentials), then reads the league's pages headless and writes a
+snapshot in exactly this format:
+
+```sh
+cd scraper
+uv sync && uv run playwright install chromium
+uv run python -m fantasy_scraper login       # once; sign in in the window
+uv run python -m fantasy_scraper snapshot    # -> ../data/snapshot-<date>.json
+cd .. && cargo run -- --snapshot data/snapshot-$(date +%F).json available-players
+```
+
+See [scraper/README.md](scraper/README.md) for details and troubleshooting.
+
 ## Development
 
 ```sh
@@ -73,6 +90,7 @@ cargo fmt --all                                      # format
 cargo clippy --workspace --all-targets -- -D warnings
 cargo test --workspace
 python3 scripts/gen_fixture.py                       # regenerate fake fixture
+(cd scraper && uv run python -m unittest discover -s tests -t .)   # scraper tests (offline)
 ```
 
 CI (`.github/workflows/ci.yml`) runs fmt, clippy, tests and a CLI smoke test on every push/PR.
@@ -84,6 +102,7 @@ Cargo.toml                 workspace root (shared deps + lints)
 crates/hoops-core/         library: models, datasource, db, analysis
   migrations/0001_init.sql SQLite schema
 crates/hoops-cli/          `hoops` binary (clap); tests/cli.rs runs it end to end
-fixtures/                  fake sample snapshot
+fixtures/                  fake sample snapshots (sample_snapshot.json, scraper_sample_snapshot.json)
 scripts/gen_fixture.py     fixture generator
+scraper/                   Python + Playwright Yahoo league scraper -> snapshot JSON
 ```

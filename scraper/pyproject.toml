@@ -1,0 +1,23 @@
+# Python project for the local Yahoo Fantasy scraper.
+#
+# `uv sync` reads this file, creates scraper/.venv and installs the
+# dependencies. There is nothing to "build": we run the code with
+# `uv run python -m fantasy_scraper ...` from this directory.
+[project]
+name = "fantasy-hoops-scraper"
+version = "0.1.0"
+description = "Local, logged-in Yahoo Fantasy Basketball scraper that writes a hoops JSON snapshot."
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    # Drives a real browser (Brave or bundled Chromium) so Yahoo sees a normal,
+    # logged-in user. Credentials stay in the browser; the script never sees them.
+    "playwright>=1.47",
+    # Forgiving HTML parser. We use the built-in "html.parser" backend, so no
+    # C extensions (lxml) are needed.
+    "beautifulsoup4>=4.12",
+]
+
+[tool.uv]
+# This is an application, not a library: don't try to build/install it.
+package = false
