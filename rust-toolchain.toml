@@ -1,0 +1,4 @@
+# Pins the toolchain channel and makes sure rustfmt + clippy are installed.
+[toolchain]
+channel = "stable"
+components = ["rustfmt", "clippy"]

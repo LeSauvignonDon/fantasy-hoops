@@ -1,0 +1,30 @@
+# Workspace root. A "workspace" lets several crates share one Cargo.lock and
+# one target/ directory, so they build together and agree on dependency versions.
+[workspace]
+resolver = "2"
+members = ["crates/hoops-core", "crates/hoops-cli"]
+
+# Shared metadata that member crates opt into with `field.workspace = true`.
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+license = "MIT"
+publish = false
+
+# Dependency versions are declared once here; members say `dep = { workspace = true }`.
+[workspace.dependencies]
+anyhow = "1"
+clap = { version = "4", features = ["derive", "env"] }
+# "bundled" compiles SQLite from source, so no system libsqlite3 is required.
+rusqlite = { version = "0.41", features = ["bundled"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+thiserror = "2"
+
+# Lints applied to every member crate (opted into via `[lints] workspace = true`).
+[workspace.lints.rust]
+unsafe_code = "forbid"
+missing_debug_implementations = "warn"
+
+[workspace.lints.clippy]
+dbg_macro = "warn"

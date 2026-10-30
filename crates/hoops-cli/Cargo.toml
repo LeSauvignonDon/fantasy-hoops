@@ -1,0 +1,20 @@
+[package]
+name = "hoops-cli"
+description = "Command-line front end for hoops-core."
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish.workspace = true
+
+# The installed binary is called `hoops`.
+[[bin]]
+name = "hoops"
+path = "src/main.rs"
+
+[dependencies]
+hoops-core = { path = "../hoops-core" }
+anyhow = { workspace = true }
+clap = { workspace = true }
+
+[lints]
+workspace = true

@@ -1,0 +1,18 @@
+# Build output
+/target/
+**/*.rs.bk
+
+# Local databases and real (non-fixture) snapshots: never commit league data or tokens
+*.db
+*.db-journal
+*.sqlite
+/data/
+/snapshots/
+.env
+yahoo_token*.json
+oauth*.json
+
+# Editors / OS
+.idea/
+.vscode/
+.DS_Store
